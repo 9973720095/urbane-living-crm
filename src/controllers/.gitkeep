@@ -1,0 +1,8 @@
+// src/controllers/.gitkeep
+// Controllers translate HTTP to services - no Next.js imports here
+
+// src/services/.gitkeep  
+// Services contain business logic - pure TypeScript
+
+// src/repositories/.gitkeep
+// Repositories are the ONLY place Prisma is used

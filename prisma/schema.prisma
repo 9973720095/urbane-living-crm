@@ -1,7 +1,57 @@
 datasource db {
-  provider = "mongodb"
+  provider = "sqlite"
+  url = "file:./dev.db"
 }
 
 generator client {
   provider = "prisma-client-js"
+}
+
+model Lead {
+  id String @id @default(cuid())
+  customer_name String
+  phone_number String @unique
+  email String?
+  city String?
+  meta_lead_id String? @unique
+  ad_id String?
+  created_time DateTime?
+
+  // Sheet extra columns
+  location_detail String? // R
+  timeline String? // S
+  area String? // T
+
+  // WORKFLOW
+  stage String @default("NEW") // NEW, ASSIGNED, CALL_SCHEDULED, MEETING_FIXED, FOLLOWUP, SITE_VISIT, CONFIRMED, REJECTED
+  lead_status String @default("CREATED")
+  assignedToId String?
+  assignedTo Employee? @relation(fields: [assignedToId], references: [id])
+  nextFollowUp DateTime?
+  siteVisitDate DateTime?
+  remarks String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  activities Activity[]
+}
+
+model Employee {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  whatsapp String @unique
+  leads Lead[]
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  leadId      String
+  type        String   // e.g., "STAGE_CHANGE"
+  oldStatus   String?  // Naya field
+  newStatus   String?  // Naya field
+  note        String?
+  performedBy String?
+  createdAt   DateTime @default(now())
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }

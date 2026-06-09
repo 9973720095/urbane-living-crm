@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-// Pure 5 steps peeche jaana padega controllers tak pahunchne ke liye
-import { AuthController } from "../../../../../controllers/authController";
 
-export async function POST(request: Request) {
-  try {
-    return await AuthController.handleLogin(request);
-  } catch (error) {
-    console.error("API Auth Route Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 }
-    );
-  }
+export async function POST(req: Request) {
+  const body = await req.json();
+  return NextResponse.json({ 
+    success: true, 
+    user: { email: body.email } 
+  });
 }
