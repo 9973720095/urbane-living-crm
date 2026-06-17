@@ -1,57 +1,240 @@
-datasource db {
-  provider = "sqlite"
-  url = "file:./dev.db"
-}
-
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "library"
 }
 
-model Lead {
-  id String @id @default(cuid())
-  customer_name String
-  phone_number String @unique
-  email String?
-  city String?
-  meta_lead_id String? @unique
-  ad_id String?
-  created_time DateTime?
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  // Sheet extra columns
-  location_detail String? // R
-  timeline String? // S
-  area String? // T
-
-  // WORKFLOW
-  stage String @default("NEW") // NEW, ASSIGNED, CALL_SCHEDULED, MEETING_FIXED, FOLLOWUP, SITE_VISIT, CONFIRMED, REJECTED
-  lead_status String @default("CREATED")
-  assignedToId String?
-  assignedTo Employee? @relation(fields: [assignedToId], references: [id])
-  nextFollowUp DateTime?
-  siteVisitDate DateTime?
-  remarks String?
-
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  password  String
+  role      Role     @default(EMPLOYEE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  activities Activity[]
 }
 
 model Employee {
-  id String @id @default(cuid())
-  name String
-  email String @unique
-  whatsapp String @unique
-  leads Lead[]
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  whatsapp    String
+  createdAt   DateTime @default(now())
+  designation String?
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  followups FollowUp[]
+  leads     Lead[]
+  meetings  Meeting[]
+  orders    Order[]
+
+  // NEW
+  tasks         Task[]
+  notifications Notification[]
+}
+
+model Lead {
+  id              String    @id @default(cuid())
+  customer_name   String
+  phone_number    String
+  email           String?
+  city            String?
+  meta_lead_id    String?
+  ad_id           String?
+  created_time    DateTime?
+  location_detail String?
+  timeline        String?
+  area            String?
+
+  lead_status   String    @default("CREATED")
+  assignedToId  String?
+  nextFollowUp  DateTime?
+  siteVisitDate DateTime?
+  remarks       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  priority String?
+  tags     String?
+
+  stage LeadStage @default(NEW)
+
+  activities Activity[]
+  followups  FollowUp[]
+  meetings   Meeting[]
+  orders     Order[]
+
+  assignedTo Employee? @relation(fields: [assignedToId], references: [id])
+
+  // NEW
+  tasks Task[]
 }
 
 model Activity {
   id          String   @id @default(cuid())
   leadId      String
-  type        String   // e.g., "STAGE_CHANGE"
-  oldStatus   String?  // Naya field
-  newStatus   String?  // Naya field
+  type        String
+  oldStatus   String?
+  newStatus   String?
   note        String?
   performedBy String?
   createdAt   DateTime @default(now())
-  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model FollowUp {
+  id           String         @id @default(cuid())
+  followupDate DateTime
+  remarks      String?
+  status       FollowUpStatus @default(PENDING)
+
+  // NEW
+  reminderSent Boolean @default(false)
+
+  leadId     String
+  employeeId String
+
+  createdAt DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Meeting {
+  id            String        @id @default(cuid())
+  meetingDate   DateTime
+  notes         String?
+  status        MeetingStatus @default(SCHEDULED)
+  googleEventId String?
+
+  // NEW
+  duration Int? @default(30)
+
+  leadId     String
+  employeeId String
+
+  createdAt DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id      String      @id @default(cuid())
+  amount  Float?
+  status  OrderStatus @default(PENDING)
+  remarks String?
+
+  leadId     String
+  employeeId String
+
+  createdAt DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  title   String
+  message String
+  isRead  Boolean          @default(false)
+  type    NotificationType @default(INFO)
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+
+  type   TaskType
+  status TaskStatus @default(PENDING)
+
+  leadId     String
+  employeeId String
+
+  scheduledAt DateTime
+
+  googleEventId String?
+
+  acceptedAt  DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum LeadStage {
+  NEW
+  CALL_SCHEDULED
+  FOLLOWUP
+  MEETING_FIXED
+  SITE_VISIT
+  CONFIRMED
+  REJECTED
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  MISSED
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum TaskType {
+  CALL
+  FOLLOWUP
+  MEETING
+  SITE_VISIT
+}
+
+enum TaskStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
 }

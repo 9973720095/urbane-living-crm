@@ -1,13 +1,18 @@
-import { applyLeadFilters } from "@/lib/filters/lead.filters";
-import { prisma } from "@/lib/prisma";
+import { LeadService } from "@/services/lead.service";
+import { LeadStage } from "@prisma/client";
 
 export class LeadController {
-  static async getLeads(filters: any) {
-    const where = applyLeadFilters(filters);
-    return await prisma.lead.findMany({ 
-        where,
-        orderBy: { createdAt: 'desc' } // Latest leads pehle dikhengi
-    });
+  private leadService = new LeadService();
+
+  async getAllLeads() {
+    return this.leadService.getAllLeads();
   }
-  // ... existing update methods
+
+  async getLeadById(id: string) {
+    return this.leadService.getLeadById(id);
+  }
+
+  async updateLeadStage(id: string, stage: LeadStage) {
+    return this.leadService.updateLeadStage(id, stage);
+  }
 }

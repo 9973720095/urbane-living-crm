@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
 import { LeadController } from "@/controllers/lead.controller";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  
-  // Extract filters from URL
-  const filters = {
-    status: searchParams.get("status"),
-    employeeId: searchParams.get("employeeId"),
-    search: searchParams.get("search"),
-  };
+const leadController = new LeadController();
 
-  // Controller call karo
-  const leads = await LeadController.getLeads(filters);
-  return NextResponse.json(leads);
+export async function GET() {
+  try {
+    const leads = await leadController.getAllLeads();
+
+    return NextResponse.json({
+      success: true,
+      data: leads,
+    });
+  } catch (error) {
+    console.error("GET LEADS ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        data: [],
+        message: "Failed to fetch leads",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
