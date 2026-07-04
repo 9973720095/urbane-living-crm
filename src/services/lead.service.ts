@@ -14,7 +14,7 @@ export class LeadService {
   private leadRepository = new LeadRepository();
 
   // =========================
-  // EXISTING METHODS (UNCHANGED)
+  // EXISTING METHODS
   // =========================
 
   async getAllLeads() {
@@ -30,7 +30,15 @@ export class LeadService {
   }
 
   // =========================
-  // 🔥 NEW: FILTERED + PAGINATED LEADS (MAIN CRM POWER)
+  // NEW: CREATE LEAD METHOD
+  // =========================
+
+  async createLead(data: any) {
+    return await this.leadRepository.create(data);
+  }
+
+  // =========================
+  // EXISTING: FILTERED + PAGINATED LEADS
   // =========================
 
   async getFilteredLeads(filters: LeadFilters) {
@@ -47,17 +55,14 @@ export class LeadService {
 
     const where: any = {};
 
-    // STATUS FILTER
     if (status) {
       where.stage = status;
     }
 
-    // ASSIGNED FILTER
     if (assignedTo) {
       where.assignedToId = assignedTo;
     }
 
-    // SEARCH FILTER
     if (search) {
       where.OR = [
         {
@@ -80,7 +85,6 @@ export class LeadService {
       ];
     }
 
-    // SORT LOGIC
     const orderBy =
       sort === "createdAt_asc"
         ? { createdAt: "asc" }

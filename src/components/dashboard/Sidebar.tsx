@@ -45,6 +45,14 @@ export default function Sidebar({
       icon: "📋",
       title: "Employee Tasks",
     },
+
+    // NEW MENU
+    {
+      key: "taskManager",
+      icon: "🎯",
+      title: "Task Manager",
+    },
+
     {
       key: "leads",
       icon: "👥",

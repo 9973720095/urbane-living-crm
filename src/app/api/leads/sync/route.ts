@@ -23,9 +23,12 @@ export async function GET() {
 
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-    const response = await fetch(csvUrl, {
-      cache: "no-store",
-    });
+    console.log("CSV URL =", csvUrl);
+
+const response = await fetch(csvUrl);
+
+console.log("Response Status =", response.status);
+console.log("Response OK =", response.ok);
 
     if (!response.ok) {
       return NextResponse.json(
@@ -41,6 +44,7 @@ export async function GET() {
     }
 
     const csv = await response.text();
+    console.log(csv.substring(0, 500));
 
     console.log("CSV PREVIEW:");
     console.log(csv.substring(0, 500));

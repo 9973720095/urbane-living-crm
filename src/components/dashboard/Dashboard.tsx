@@ -13,6 +13,7 @@ import CityAnalytics from "./CityAnalytics";
 import TaskPanel from "./TaskPanel";
 import EmployeePerformance from "./EmployeePerformance";
 import EmployeeTasks from "./EmployeeTasks";
+import AdminTaskManager from "./AdminTaskManager";
 import CeilingLeads from "./CeilingLeads";
 import SystemSettings from "./SystemSettings";
 
@@ -23,15 +24,23 @@ export default function Dashboard() {
 
   const fetchLeads = async () => {
     try {
+      await fetch("/api/leads/sync");
+
       const res = await fetch("/api/leads");
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        throw new Error("Failed to fetch leads");
+      }
 
       const data = await res.json();
 
-      setLeads(Array.isArray(data.data) ? data.data : []);
+      setLeads(
+        Array.isArray(data.data)
+          ? data.data
+          : []
+      );
     } catch (err) {
-      console.error(err);
+      console.error("LEAD FETCH ERROR:", err);
       setLeads([]);
     } finally {
       setLoading(false);
@@ -43,7 +52,7 @@ export default function Dashboard() {
 
     const interval = setInterval(() => {
       fetchLeads();
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -73,11 +82,8 @@ export default function Dashboard() {
           {/* OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-8">
-
               <OverviewConsole leads={leads} />
-
               <DashboardStats leads={leads} />
-
             </div>
           )}
 
@@ -88,11 +94,8 @@ export default function Dashboard() {
               <DashboardStats leads={leads} />
 
               <div className="grid xl:grid-cols-2 gap-8">
-
                 <RecentLeads leads={leads} />
-
                 <CityAnalytics leads={leads} />
-
               </div>
 
             </div>
@@ -106,6 +109,11 @@ export default function Dashboard() {
           {/* TASK CENTER */}
           {activeTab === "tasks" && (
             <TaskPanel leads={leads} />
+          )}
+
+          {/* TASK MANAGER */}
+          {activeTab === "taskManager" && (
+            <AdminTaskManager />
           )}
 
           {/* CITY ANALYTICS */}

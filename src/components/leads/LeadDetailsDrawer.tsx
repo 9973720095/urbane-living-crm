@@ -1,16 +1,25 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
+
 import {
   X,
   User,
   Phone,
   MessageCircle,
   Mail,
-  MapPin,
-  Calendar,
-  Clock3,
-  BadgeCheck,
+  Loader2,
 } from "lucide-react";
+
+import CustomerInfo from "./LeadProfileModal/CustomerInfo";
+import UploadMedia from "./LeadProfileModal/UploadMedia";
+import LeadGallery from "./LeadProfileModal/LeadGallery";
+import CallRecordings from "./LeadProfileModal/CallRecordings";
+
+import {
+  LeadMedia,
+  CallRecording,
+} from "./LeadProfileModal/types";
 
 interface Props {
   lead: any;
@@ -21,53 +30,176 @@ export default function LeadDetailsDrawer({
   lead,
   onClose,
 }: Props) {
+
+  // ==========================================================
+  // STATES
+  // ==========================================================
+
+  const [media, setMedia] = useState<LeadMedia[]>([]);
+
+  const [recordings, setRecordings] = useState<
+    CallRecording[]
+  >([]);
+
+  const [loadingMedia, setLoadingMedia] =
+    useState(true);
+
+  const [loadingRecordings, setLoadingRecordings] =
+    useState(true);
+
+  const [mediaError, setMediaError] =
+    useState<string | null>(null);
+
+  const [recordingError, setRecordingError] =
+    useState<string | null>(null);
+
+  // ==========================================================
+  // BODY SCROLL LOCK
+  // ==========================================================
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  // ==========================================================
+  // QUICK ACTIONS
+  // ==========================================================
+
+  const whatsappUrl = lead?.phone_number
+    ? `https://wa.me/${lead.phone_number.replace(/\D/g, "")}`
+    : "#";
+
+  // ==========================================================
+  // LOAD MEDIA
+  // ==========================================================
+
+  const loadMedia = useCallback(async () => {
+    if (!lead?.id) return;
+
+    setLoadingMedia(true);
+    setMediaError(null);
+
+    try {
+      const res = await fetch(
+        `/api/lead-media?leadId=${lead.id}`,
+        {
+          cache: "no-store",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.message || "Unable to load media"
+        );
+      }
+
+      setMedia(data.media || []);
+    } catch (err: any) {
+      console.error(err);
+
+      setMedia([]);
+
+      setMediaError(
+        err.message || "Unable to load media"
+      );
+    } finally {
+      setLoadingMedia(false);
+    }
+  }, [lead?.id]);
+
+  // ==========================================================
+  // LOAD RECORDINGS
+  // ==========================================================
+
+  const loadRecordings = useCallback(async () => {
+    if (!lead?.id) return;
+
+    setLoadingRecordings(true);
+
+    setRecordingError(null);
+
+    try {
+      const res = await fetch(
+        `/api/call-recordings?leadId=${lead.id}`,
+        {
+          cache: "no-store",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to load recordings"
+        );
+      }
+
+      setRecordings(data.recordings || []);
+    } catch (err: any) {
+      console.error(err);
+
+      setRecordings([]);
+
+      setRecordingError(
+        err.message ||
+          "Unable to load recordings"
+      );
+    } finally {
+      setLoadingRecordings(false);
+    }
+  }, [lead?.id]);
+
+  // ==========================================================
+  // INITIAL LOAD
+  // ==========================================================
+
+  useEffect(() => {
+    if (!lead?.id) return;
+
+    loadMedia();
+
+    loadRecordings();
+  }, [
+    lead?.id,
+    loadMedia,
+    loadRecordings,
+  ]);
+
+  // ==========================================================
+  // CLOSE
+  // ==========================================================
+
   if (!lead) return null;
 
-  const whatsappUrl = `https://wa.me/${lead.phone_number?.replace(
-    /\D/g,
-    ""
-  )}`;
-
-  const getStageColor = () => {
-    switch (lead.stage) {
-      case "CONFIRMED":
-        return "bg-green-100 text-green-700";
-
-      case "REJECTED":
-        return "bg-red-100 text-red-700";
-
-      case "SITE_VISIT":
-        return "bg-purple-100 text-purple-700";
-
-      case "MEETING_FIXED":
-        return "bg-blue-100 text-blue-700";
-
-      case "FOLLOWUP":
-        return "bg-orange-100 text-orange-700";
-
-      case "CALL_SCHEDULED":
-        return "bg-yellow-100 text-yellow-700";
-
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  };
+  // ==========================================================
+  // UI STARTS HERE
+  // ==========================================================
 
   return (
     <>
       {/* Overlay */}
+
       <div
-        className="fixed inset-0 bg-black/40 z-40"
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-screen w-full md:w-[550px] bg-white z-50 overflow-y-auto shadow-2xl">
 
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-6 py-5 flex justify-between items-center">
+      <div className="fixed top-0 right-0 z-50 h-screen w-full md:w-[650px] bg-white shadow-2xl overflow-y-auto">
+                  {/* Header */}
+
+        <div className="sticky top-0 z-30 bg-white border-b px-6 py-5 flex items-center justify-between">
 
           <div>
+
             <h2 className="text-2xl font-bold text-slate-800">
               Lead Details
             </h2>
@@ -75,45 +207,77 @@ export default function LeadDetailsDrawer({
             <p className="text-sm text-slate-500">
               Customer Profile
             </p>
+
           </div>
 
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center"
+            className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center transition"
           >
-            <X />
+            <X size={22} />
           </button>
+
         </div>
+
+        {/* Body */}
 
         <div className="p-6 space-y-6">
 
-          {/* Customer */}
-          <div className="bg-slate-50 rounded-3xl p-5">
+          {/* Customer Card */}
 
-            <div className="flex gap-4 items-center">
+          <div className="rounded-3xl border bg-gradient-to-r from-indigo-50 via-white to-slate-50 p-6">
 
-              <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-                <User className="text-indigo-600" />
+            <div className="flex items-start gap-5">
+
+              <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+
+                <User
+                  size={30}
+                  className="text-indigo-600"
+                />
+
               </div>
 
-              <div>
+              <div className="flex-1 min-w-0">
 
-                <h2 className="text-xl font-bold text-slate-800">
+                <h2 className="text-2xl font-bold text-slate-800 truncate">
+
                   {lead.customer_name}
+
                 </h2>
 
-                <div className="flex gap-2 mt-2">
+                <p className="text-slate-500 mt-1">
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getStageColor()}`}
-                  >
-                    {lead.stage}
+                  {lead.phone_number}
+
+                </p>
+
+                <div className="flex flex-wrap gap-2 mt-4">
+
+                  <span className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
+
+                    {lead.stage || "NEW"}
+
                   </span>
 
                   {lead.priority && (
-                    <span className="px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold">
+
+                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+
                       {lead.priority}
+
                     </span>
+
+                  )}
+
+                  {lead.tags && (
+
+                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+
+                      {lead.tags}
+
+                    </span>
+
                   )}
 
                 </div>
@@ -124,171 +288,250 @@ export default function LeadDetailsDrawer({
 
           </div>
 
-          {/* Actions */}
+          {/* Quick Actions */}
+
           <div>
 
-            <h3 className="font-semibold mb-3">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">
+
               Quick Actions
+
             </h3>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-4">
 
               <a
                 href={`tel:${lead.phone_number}`}
-                className="bg-green-50 rounded-2xl p-4 text-center hover:bg-green-100"
+                className="rounded-2xl bg-green-50 hover:bg-green-100 transition p-5 text-center border"
               >
-                <Phone className="mx-auto text-green-600" />
 
-                <div className="text-sm mt-2">
+                <Phone
+                  className="mx-auto text-green-600"
+                  size={24}
+                />
+
+                <p className="mt-3 text-sm font-medium">
+
                   Call
-                </div>
+
+                </p>
+
               </a>
 
               <a
                 href={whatsappUrl}
                 target="_blank"
-                className="bg-emerald-50 rounded-2xl p-4 text-center hover:bg-emerald-100"
+                rel="noopener noreferrer"
+                className="rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition p-5 text-center border"
               >
-                <MessageCircle className="mx-auto text-emerald-600" />
 
-                <div className="text-sm mt-2">
+                <MessageCircle
+                  className="mx-auto text-emerald-600"
+                  size={24}
+                />
+
+                <p className="mt-3 text-sm font-medium">
+
                   WhatsApp
-                </div>
+
+                </p>
+
               </a>
 
               <a
                 href={`mailto:${lead.email}`}
-                className="bg-blue-50 rounded-2xl p-4 text-center hover:bg-blue-100"
+                className="rounded-2xl bg-blue-50 hover:bg-blue-100 transition p-5 text-center border"
               >
-                <Mail className="mx-auto text-blue-600" />
 
-                <div className="text-sm mt-2">
+                <Mail
+                  className="mx-auto text-blue-600"
+                  size={24}
+                />
+
+                <p className="mt-3 text-sm font-medium">
+
                   Email
-                </div>
+
+                </p>
+
               </a>
 
             </div>
 
           </div>
 
-          {/* Information */}
-          <div className="border rounded-3xl p-5 space-y-5">
+          {/* Customer Information */}
 
-            <h3 className="font-bold text-slate-800">
-              Customer Information
-            </h3>
+          <CustomerInfo
+            lead={lead}
+          />
 
-            <InfoItem
-              icon={<Phone size={17} />}
-              label="Phone"
-              value={lead.phone_number}
-            />
+          {/* Upload Media */}
 
-            <InfoItem
-              icon={<Mail size={17} />}
-              label="Email"
-              value={lead.email}
-            />
+          <UploadMedia
+            leadId={lead.id}
+            onUploaded={loadMedia}
+          />
 
-            <InfoItem
-              icon={<MapPin size={17} />}
-              label="City"
-              value={`${lead.city || "-"} ${lead.area || ""}`}
-            />
+          {/* Gallery */}
 
-            <InfoItem
-              icon={<Clock3 size={17} />}
-              label="Timeline"
-              value={lead.timeline}
-            />
+          <div>
 
-            <InfoItem
-              icon={<User size={17} />}
-              label="Assigned Employee"
-              value={lead.assignedTo?.name}
-            />
+            <div className="flex items-center justify-between mb-4">
 
-            <InfoItem
-              icon={<Calendar size={17} />}
-              label="Next Followup"
-              value={
-                lead.nextFollowUp
-                  ? new Date(
-                      lead.nextFollowUp
-                    ).toLocaleString()
-                  : "-"
-              }
-            />
+              <h3 className="text-lg font-semibold">
 
-            <InfoItem
-              icon={<BadgeCheck size={17} />}
-              label="Site Visit"
-              value={
-                lead.siteVisitDate
-                  ? new Date(
-                      lead.siteVisitDate
-                    ).toLocaleString()
-                  : "-"
-              }
-            />
+                Customer Media
 
-            <InfoItem
-              icon={<BadgeCheck size={17} />}
-              label="Tags"
-              value={lead.tags}
-            />
+              </h3>
 
-            <InfoItem
-              icon={<BadgeCheck size={17} />}
-              label="Remarks"
-              value={lead.remarks}
-            />
+              {loadingMedia && (
+
+                <Loader2
+                  size={20}
+                  className="animate-spin text-slate-500"
+                />
+
+              )}
+
+            </div>
+                        {mediaError ? (
+
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
+
+                <p className="text-red-600 text-sm">
+
+                  {mediaError}
+
+                </p>
+
+                <button
+                  onClick={loadMedia}
+                  className="mt-4 rounded-xl bg-red-600 hover:bg-red-700 text-white px-4 py-2"
+                >
+                  Retry
+                </button>
+
+              </div>
+
+            ) : (
+
+              <LeadGallery
+                media={media}
+                onDeleted={loadMedia}
+              />
+
+            )}
 
           </div>
 
-          {/* Created */}
-          <div className="bg-slate-50 rounded-3xl p-5">
+          {/* ========================================= */}
+          {/* CALL RECORDINGS */}
+          {/* ========================================= */}
 
-            <div className="text-sm text-slate-500">
-              Created At
+          <div className="space-y-4">
+
+            <div className="flex items-center justify-between">
+
+              <h3 className="text-lg font-semibold">
+
+                Call Recordings
+
+              </h3>
+
+              {loadingRecordings && (
+
+                <Loader2
+                  size={20}
+                  className="animate-spin text-slate-500"
+                />
+
+              )}
+
             </div>
 
-            <div className="font-semibold mt-1">
-              {new Date(
-                lead.createdAt
-              ).toLocaleString()}
-            </div>
+            {recordingError ? (
+
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
+
+                <p className="text-red-600">
+
+                  {recordingError}
+
+                </p>
+
+                <button
+                  onClick={loadRecordings}
+                  className="mt-4 rounded-xl bg-red-600 hover:bg-red-700 text-white px-4 py-2"
+                >
+                  Retry
+                </button>
+
+              </div>
+
+            ) : (
+
+     <CallRecordings
+    recordings={[]}
+    loading={false}
+/>
+
+            )}
 
           </div>
 
-        </div>
+          {/* ========================================= */}
+          {/* CREATED INFO */}
+          {/* ========================================= */}
+
+          <div className="rounded-3xl border p-5 bg-slate-50">
+
+            <div className="grid md:grid-cols-2 gap-5">
+
+              <div>
+
+                <p className="text-xs uppercase tracking-wide text-slate-500">
+
+                  Created At
+
+                </p>
+
+                <p className="font-semibold mt-2">
+
+                  {new Date(
+                    lead.createdAt
+                  ).toLocaleString()}
+
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-xs uppercase tracking-wide text-slate-500">
+
+                  Updated At
+
+                </p>
+
+                <p className="font-semibold mt-2">
+
+                  {new Date(
+                    lead.updatedAt
+                  ).toLocaleString()}
+
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+                  </div>
 
       </div>
+
     </>
-  );
-}
 
-function InfoItem({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: any;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="border-b pb-4">
-
-      <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
-        {icon}
-        {label}
-      </div>
-
-      <div className="font-medium text-slate-800 break-words">
-        {value || "-"}
-      </div>
-
-    </div>
   );
 }

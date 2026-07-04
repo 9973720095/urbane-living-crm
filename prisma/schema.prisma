@@ -33,9 +33,12 @@ model Employee {
   meetings  Meeting[]
   orders    Order[]
 
-  // NEW
+  // Existing
   tasks         Task[]
   notifications Notification[]
+
+  // NEW
+  uploadedMedia LeadMedia[]
 }
 
 model Lead {
@@ -72,8 +75,11 @@ model Lead {
 
   assignedTo Employee? @relation(fields: [assignedToId], references: [id])
 
-  // NEW
+  // Existing
   tasks Task[]
+
+  // NEW
+  media LeadMedia[]
 }
 
 model Activity {
@@ -95,7 +101,6 @@ model FollowUp {
   remarks      String?
   status       FollowUpStatus @default(PENDING)
 
-  // NEW
   reminderSent Boolean @default(false)
 
   leadId     String
@@ -115,7 +120,6 @@ model Meeting {
   status        MeetingStatus @default(SCHEDULED)
   googleEventId String?
 
-  // NEW
   duration Int? @default(30)
 
   leadId     String
@@ -156,7 +160,6 @@ model Notification {
 
   createdAt DateTime @default(now())
 }
-
 model Task {
   id String @id @default(cuid())
 
@@ -179,10 +182,62 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead Lead @relation(
+    fields: [leadId],
+    references: [id],
+    onDelete: Cascade
+  )
 
-  employee Employee @relation(fields: [employeeId], references: [id])
+  employee Employee @relation(
+    fields: [employeeId],
+    references: [id]
+  )
 }
+
+//
+// ======================================
+// CUSTOMER PROFILE MEDIA
+// ======================================
+//
+
+model LeadMedia {
+  id String @id @default(cuid())
+
+  leadId String
+
+  uploadedById String?
+
+  type LeadMediaType
+
+  fileName String
+
+  fileUrl String
+
+  fileSize Int?
+
+  caption String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  lead Lead @relation(
+    fields: [leadId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  uploadedBy Employee? @relation(
+    fields: [uploadedById],
+    references: [id]
+  )
+}
+
+//
+// ======================================
+// ENUMS
+// ======================================
+//
 
 enum Role {
   ADMIN
@@ -237,4 +292,15 @@ enum TaskStatus {
   ACCEPTED
   REJECTED
   COMPLETED
+}
+
+//
+// Lead Profile Media Types
+//
+
+enum LeadMediaType {
+  PHOTO
+  VIDEO
+  AUDIO
+  DOCUMENT
 }

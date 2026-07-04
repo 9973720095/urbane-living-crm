@@ -3,7 +3,7 @@ import { LeadStage } from "@prisma/client";
 
 export class LeadRepository {
   // =========================
-  // BASIC METHODS (UNCHANGED BEHAVIOR)
+  // BASIC METHODS
   // =========================
 
   async getAll() {
@@ -41,7 +41,7 @@ export class LeadRepository {
   }
 
   // =========================
-  // 🔥 NEW: CRM CORE METHODS (POWER LAYER)
+  // CRM CORE METHODS
   // =========================
 
   async findMany(args: any) {
@@ -58,19 +58,27 @@ export class LeadRepository {
   }
 
   // =========================
-  // 🔥 OPTIONAL FUTURE READY METHODS
-  // (AI CRM / Automation / Scaling)
+  // CREATE METHODS (Fixed for Service Layer)
+  // =========================
+
+  // Service layer mein .create() call ho raha hai, isliye ye alias zaroori hai
+  async create(data: any) {
+    return this.createLead(data);
+  }
+
+  async createLead(data: any) {
+    return prisma.lead.create({
+      data,
+    });
+  }
+
+  // =========================
+  // FUTURE READY METHODS
   // =========================
 
   async updateLead(id: string, data: any) {
     return prisma.lead.update({
       where: { id },
-      data,
-    });
-  }
-
-  async createLead(data: any) {
-    return prisma.lead.create({
       data,
     });
   }
@@ -81,7 +89,6 @@ export class LeadRepository {
     });
   }
 
-  // Bulk update (useful for CRM actions)
   async bulkUpdate(where: any, data: any) {
     return prisma.lead.updateMany({
       where,
