@@ -5,7 +5,11 @@ export class TaskController {
 
   // Create Task
   async createTask(data: any) {
-    return this.taskService.createTask(data);
+    const formattedData = {
+      ...data,
+      scheduledAt: new Date(data.scheduledAt),
+    };
+    return this.taskService.createTask(formattedData);
   }
 
   // Single Task

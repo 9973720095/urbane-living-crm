@@ -182,16 +182,8 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lead Lead @relation(
-    fields: [leadId],
-    references: [id],
-    onDelete: Cascade
-  )
-
-  employee Employee @relation(
-    fields: [employeeId],
-    references: [id]
-  )
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id])
 }
 
 //
@@ -221,16 +213,9 @@ model LeadMedia {
 
   updatedAt DateTime @updatedAt
 
-  lead Lead @relation(
-    fields: [leadId],
-    references: [id],
-    onDelete: Cascade
-  )
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
-  uploadedBy Employee? @relation(
-    fields: [uploadedById],
-    references: [id]
-  )
+  uploadedBy Employee? @relation(fields: [uploadedById],references: [id])
 }
 
 //

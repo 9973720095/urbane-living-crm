@@ -14,25 +14,25 @@ export class TaskService {
       scheduledAt: new Date(data.scheduledAt),
     });
 
-    try {
-      const event = await calendar.createEvent({
-        title: `${task.type} - ${task.lead.customer_name}`,
-        description: task.lead.phone_number,
-        start: task.scheduledAt,
-        end: new Date(
-          task.scheduledAt.getTime() + 30 * 60000
-        ),
-        email: task.employee.email,
-      });
+    // Updated: Safety check added to prevent crash if lead/employee data is missing
+    if (task.lead && task.employee) {
+      try {
+        const event = await calendar.createEvent({
+          title: `${task.type} - ${task.lead.customer_name}`,
+          description: task.lead.phone_number,
+          start: task.scheduledAt,
+          end: new Date(task.scheduledAt.getTime() + 30 * 60000),
+          email: task.employee.email,
+        });
 
-      await this.taskRepository.update(task.id, {
-        googleEventId: event.id,
-      });
-    } catch (error) {
-      console.error(
-        "Google Calendar Error:",
-        error
-      );
+        await this.taskRepository.update(task.id, {
+          googleEventId: event.id,
+        });
+      } catch (error) {
+        console.error("Google Calendar Error:", error);
+      }
+    } else {
+      console.warn("Task created, but Calendar sync skipped: Missing lead or employee details.");
     }
 
     return task;

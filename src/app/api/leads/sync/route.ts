@@ -75,12 +75,9 @@ console.log("Response OK =", response.ok);
     });
 
     for (const row of rows) {
-      const phone = row["phone_number"]
-        ?.toString()
-        .replace(/\D/g, "");
-
-      if (!phone) continue;
-
+      
+      const phone = row["phone_number"]?.toString().replace(/\D/g, "");
+      if (!phone || phone.length < 10) continue; // Skip if less than 10 digits
       const phoneNumber = `+91${phone.slice(-10)}`;
 
       const leadData = {

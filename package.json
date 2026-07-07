@@ -10,6 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
+  "prisma": {
+    "seed": "ts-node -T -P tsconfig.json prisma/seed.ts"
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "6.2.1",
@@ -36,7 +39,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.20.0",
     "@types/nodemailer": "^8.0.1",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.0.1",
@@ -47,6 +50,7 @@
     "prisma": "6.2.1",
     "tailwindcss": "^3.4.3",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.6.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }
