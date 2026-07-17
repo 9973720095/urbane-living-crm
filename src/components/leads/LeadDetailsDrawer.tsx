@@ -20,6 +20,7 @@ import {
   LeadMedia,
   CallRecording,
 } from "./LeadProfileModal/types";
+import Timeline from "./details/Timeline";
 
 interface Props {
   lead: any;
@@ -99,7 +100,7 @@ export default function LeadDetailsDrawer({
         );
       }
 
-      setMedia(data.media || []);
+     setMedia(data.data || []);
     } catch (err: any) {
       console.error(err);
 
@@ -118,43 +119,52 @@ export default function LeadDetailsDrawer({
   // ==========================================================
 
   const loadRecordings = useCallback(async () => {
-    if (!lead?.id) return;
+  if (!lead?.id) return;
 
-    setLoadingRecordings(true);
+  setLoadingRecordings(true);
+  setRecordingError(null);
 
-    setRecordingError(null);
+  try {
+    const res = await fetch(
+      `/api/call-recordings?leadId=${lead.id}`,
+      {
+        cache: "no-store",
+      }
+    );
+
+
+    if (res.status === 404) {
+      setRecordings([]);
+      setRecordingError(null);
+      return;
+    }
+
+    const text = await res.text();
+
+    let data: any = {};
 
     try {
-      const res = await fetch(
-        `/api/call-recordings?leadId=${lead.id}`,
-        {
-          cache: "no-store",
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Unable to load recordings"
-        );
-      }
-
-      setRecordings(data.recordings || []);
-    } catch (err: any) {
-      console.error(err);
-
-      setRecordings([]);
-
-      setRecordingError(
-        err.message ||
-          "Unable to load recordings"
-      );
-    } finally {
-      setLoadingRecordings(false);
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error("Invalid API response.");
     }
-  }, [lead?.id]);
+
+    if (!res.ok) {
+      throw new Error(
+        data.message || "Unable to load recordings"
+      );
+    }
+
+    setRecordings(data.data || []);
+  } catch (err: any) {
+    console.error(err);
+
+    setRecordings([]);
+    setRecordingError(err.message);
+  } finally {
+    setLoadingRecordings(false);
+  }
+}, [lead?.id]);
 
   // ==========================================================
   // INITIAL LOAD
@@ -365,13 +375,12 @@ export default function LeadDetailsDrawer({
           <CustomerInfo
             lead={lead}
           />
-
-          {/* Upload Media */}
-
-          <UploadMedia
-            leadId={lead.id}
-            onUploaded={loadMedia}
-          />
+          <Timeline
+    leadId={lead.id}
+/>
+<div className="bg-red-500 text-white p-4 rounded">
+  Upload Component Test
+</div>
 
           {/* Gallery */}
 
@@ -469,12 +478,12 @@ export default function LeadDetailsDrawer({
 
               </div>
 
-            ) : (
+            ): (
 
-     <CallRecordings
-    recordings={[]}
-    loading={false}
-/>
+              <CallRecordings
+                recordings={recordings}
+                loading={loadingRecordings}
+              />
 
             )}
 

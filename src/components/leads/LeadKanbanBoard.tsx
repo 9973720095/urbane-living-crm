@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import LeadCard from "./LeadCard";
 import LeadDetailsDrawer from "./LeadDetailsDrawer";
 
@@ -12,7 +13,7 @@ export default function LeadKanbanBoard({
   leads,
 }: Props) {
   const [selectedLead, setSelectedLead] =
-    useState<any>(null);
+    useState<any | null>(null);
 
   const columns = [
     {
@@ -67,23 +68,25 @@ export default function LeadKanbanBoard({
                 className="w-[340px] flex-shrink-0"
               >
                 {/* Column Header */}
+
                 <div
-                  className={`${column.color} rounded-2xl px-4 py-3 mb-4 border`}
+                  className={`${column.color} rounded-2xl border px-4 py-3 mb-4`}
                 >
                   <div className="flex items-center justify-between">
                     <h2 className="font-bold text-slate-800">
                       {column.title}
                     </h2>
 
-                    <span className="bg-white px-3 py-1 rounded-full text-sm font-semibold">
+                    <span className="bg-white rounded-full px-3 py-1 text-sm font-semibold shadow-sm">
                       {stageLeads.length}
                     </span>
                   </div>
                 </div>
 
                 {/* Lead Cards */}
+
                 <div className="space-y-4">
-                  {stageLeads.length > 0 ? (
+                  {stageLeads.length ? (
                     stageLeads.map((lead) => (
                       <LeadCard
                         key={lead.id}
@@ -92,7 +95,7 @@ export default function LeadKanbanBoard({
                       />
                     ))
                   ) : (
-                    <div className="bg-slate-50 border rounded-2xl p-6 text-center text-sm text-slate-400">
+                    <div className="rounded-2xl border border-dashed bg-slate-50 p-8 text-center text-sm text-slate-400">
                       No Leads
                     </div>
                   )}
@@ -103,11 +106,13 @@ export default function LeadKanbanBoard({
         </div>
       </div>
 
-      {/* Drawer */}
+      {/* ================================================= */}
+      {/* Lead Profile Drawer */}
+      {/* ================================================= */}
+
       {selectedLead && (
         <LeadDetailsDrawer
           lead={selectedLead}
-          isOpen={true}
           onClose={() => setSelectedLead(null)}
         />
       )}

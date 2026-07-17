@@ -58,6 +58,11 @@ export default function Sidebar({
       icon: "👥",
       title: "Ceiling Leads",
     },
+        {
+      key: "leadManagement",
+      icon: "🎯",
+      title: "Lead Management",
+    },
     {
       key: "settings",
       icon: "⚙",

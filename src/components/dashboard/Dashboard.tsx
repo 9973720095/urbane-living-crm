@@ -16,6 +16,7 @@ import EmployeeTasks from "./EmployeeTasks";
 import AdminTaskManager from "./AdminTaskManager";
 import CeilingLeads from "./CeilingLeads";
 import SystemSettings from "./SystemSettings";
+import LeadManagement from "./LeadManagement";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -141,6 +142,11 @@ export default function Dashboard() {
               refresh={fetchLeads}
             />
           )}
+          {activeTab === "leadManagement" && (
+  <LeadManagement
+    leads={leads}
+  />
+)}
 
           {/* SETTINGS */}
           {activeTab === "settings" && (

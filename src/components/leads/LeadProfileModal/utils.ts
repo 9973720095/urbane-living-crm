@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import {
   Image as ImageIcon,
   Video,
@@ -32,16 +33,16 @@ export function formatFileSize(bytes?: number | null) {
 export function getMediaIcon(type: LeadMediaType, size = 18) {
   switch (type) {
     case "PHOTO":
-      return <ImageIcon size={size} className="text-blue-600" />;
+      return createElement(ImageIcon, { size, className: "text-blue-600" });
 
     case "VIDEO":
-      return <Video size={size} className="text-red-600" />;
+      return createElement(Video, { size, className: "text-red-600" });
 
     case "AUDIO":
-      return <Music size={size} className="text-green-600" />;
+      return createElement(Music, { size, className: "text-green-600" });
 
     default:
-      return <FileText size={size} className="text-slate-600" />;
+      return createElement(FileText, { size, className: "text-slate-600" });
   }
 }
 

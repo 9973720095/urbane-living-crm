@@ -7,7 +7,7 @@ import {
 
 interface Props {
   employeeName?: string;
-}
+}        
 
 export default function EmployeeTopNavbar({
   employeeName = "Employee",
