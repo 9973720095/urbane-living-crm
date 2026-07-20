@@ -14,8 +14,10 @@
     "seed": "ts-node -T -P tsconfig.json prisma/seed.ts"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.2",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "6.2.1",
+    "antd": "^6.5.1",
     "axios": "^1.7.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",

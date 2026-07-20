@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "antd/dist/reset.css";
 
 // 100% DYNAMIC
 export const dynamic = "force-dynamic";
