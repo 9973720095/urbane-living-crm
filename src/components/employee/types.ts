@@ -12,6 +12,10 @@ export type EmployeeStatus =
   | "ACTIVE"
   | "INACTIVE";
 
+/* ------------------------------------------
+   Employee Model
+------------------------------------------- */
+
 export interface Employee {
   id: string;
 
@@ -38,6 +42,24 @@ export interface Employee {
   updatedAt: string;
 }
 
+/* ------------------------------------------
+   Drawer (Create / Edit)
+------------------------------------------- */
+
+export interface EmployeeDrawerFormData {
+  name: string;
+
+  email: string;
+
+  whatsapp: string;
+
+  designation?: string;
+}
+
+/* ------------------------------------------
+   Complete Employee Form
+------------------------------------------- */
+
 export interface EmployeeFormData {
   name: string;
 
@@ -58,21 +80,31 @@ export interface EmployeeFormData {
   isActive: boolean;
 }
 
-export interface EmployeeApiResponse {
+/* ------------------------------------------
+   API Responses
+------------------------------------------- */
+
+export interface ApiResponse {
   success: boolean;
 
   message?: string;
+}
 
+export interface EmployeeApiResponse extends ApiResponse {
   data: Employee[];
 }
 
-export interface SingleEmployeeResponse {
-  success: boolean;
-
-  message?: string;
-
+export interface SingleEmployeeResponse extends ApiResponse {
   data: Employee;
 }
+
+export interface EmployeeMutationResponse extends ApiResponse {
+  data?: Employee;
+}
+
+/* ------------------------------------------
+   Filters
+------------------------------------------- */
 
 export interface EmployeeFilter {
   search: string;

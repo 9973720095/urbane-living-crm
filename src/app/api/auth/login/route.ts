@@ -1,24 +1,65 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
-    // 1. User find karein
-    const user = await prisma.user.findFirst({ where: { email } });
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    const employee = await prisma.employee.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!employee) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Employee not found",
+        },
+        { status: 404 }
+      );
     }
 
-    // 2. Direct password compare (NO BCRYPT)
-    if (password !== user.password) {
-      return NextResponse.json({ message: "Invalid password" }, { status: 401 });
+    if (employee.password !== password) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid Password",
+        },
+        { status: 401 }
+      );
     }
 
-    // 3. Success
-    return NextResponse.json({ success: true, user: { email: user.email } });
+    await prisma.employee.update({
+      where: {
+        id: employee.id,
+      },
+      data: {
+        lastLogin: new Date(),
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      employee: {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        role: employee.role,
+      },
+    });
   } catch (error) {
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.log(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Server Error",
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }

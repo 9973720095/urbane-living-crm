@@ -19,54 +19,64 @@ model User {
 }
 
 model Employee {
-  id             String          @id @default(cuid())
-  name           String
-  email          String
-  whatsapp       String
-  createdAt      DateTime        @default(now())
-  designation    String?
-  isActive       Boolean         @default(true)
-  updatedAt      DateTime        @updatedAt
-  callRecordings CallRecording[]
-  followups      FollowUp[]
-  leads          Lead[]
-  uploadedMedia  LeadMedia[]
-  meetings       Meeting[]
-  notifications  Notification[]
-  orders         Order[]
-  tasks          Task[]
-}
-model Employee {
-  id             String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  name           String
-  email          String   @unique
-  password       String?
-  phone          String?
-  whatsapp       String
-  avatar         String?
-  department     Department @default(MANAGEMENT)
-  role           EmployeeRole @default(EMPLOYEE)
-  designation    String?
-  employeeCode   String? @unique
-  joiningDate    DateTime?
-  reportingToId  String?
-  address        String?
-  emergencyName  String?
+  name String
+
+  email String @unique
+
+  password String
+
+  phone String?
+
+  whatsapp String
+
+  avatar String?
+
+  department Department @default(MANAGEMENT)
+
+  role EmployeeRole @default(EMPLOYEE)
+
+  designation String?
+
+  employeeCode String? @unique
+
+  joiningDate DateTime?
+
+  reportingToId String?
+
+  address String?
+
+  emergencyName String?
+
   emergencyPhone String?
-  isActive       Boolean @default(true)
-  lastLogin      DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  reportingTo Employee? @relation("EmployeeManager", fields: [reportingToId], references: [id])
-  team Employee[] @relation("EmployeeManager")
+
+  isActive Boolean @default(true)
+
+  lastLogin DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+ reportingTo Employee? @relation("EmployeeManager", fields: [reportingToId], references: [id])
+
+team Employee[] @relation("EmployeeManager")
+
   leads Lead[]
+
   followups FollowUp[]
+
   meetings Meeting[]
+
   orders Order[]
+
   tasks Task[]
+
   notifications Notification[]
+
   uploadedMedia LeadMedia[]
+
   callRecordings CallRecording[]
 }
 
@@ -277,6 +287,7 @@ enum LeadMediaType {
   AUDIO
   DOCUMENT
 }
+
 enum Department {
   MANAGEMENT
   SALES
@@ -287,6 +298,7 @@ enum Department {
   MARKETING
   IT
 }
+
 enum EmployeeRole {
   SUPER_ADMIN
 
