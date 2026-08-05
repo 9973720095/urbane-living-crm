@@ -1,86 +1,264 @@
-import React from "react";
+"use client";
+
+import { useState } from "react";
+import {
+  Phone,
+  MessageCircle,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  MapPin,
+} from "lucide-react";
 
 interface FollowUp {
   id: string;
   followupDate: string | Date;
-  remarks?: string | null;
+  remarks?: string |null;
   status: "PENDING" | "COMPLETED" | "MISSED";
+
   lead: {
+    id: string;
     customer_name: string;
     phone_number: string;
+    city?: string;
   };
 }
 
-interface EmployeeFollowupsProps {
+interface Props {
   followups: FollowUp[];
-  onActionComplete: (id: string, remarks: string) => void;
+
+  onComplete: (
+    id: string,
+    remarks: string,
+    stage: string
+  ) => void;
+
+  onReschedule: (
+    id: string,
+    date: string
+  ) => void;
 }
 
-export const EmployeeFollowups: React.FC<EmployeeFollowupsProps> = ({ followups, onActionComplete }) => {
-  const getStatusStyle = (status: string) => {
-    if (status === "COMPLETED") return "bg-green-100 text-green-800 border-green-200";
-    if (status === "MISSED") return "bg-red-100 text-red-800 border-red-200";
-    return "bg-amber-100 text-amber-800 border-amber-200";
+export default function EmployeeFollowups({
+  followups,
+  onComplete,
+  onReschedule,
+}: Props) {
+  const [remarks, setRemarks] = useState<Record<string, string>>({});
+  const [date, setDate] = useState<Record<string, string>>({});
+
+  const badge = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return "bg-green-100 text-green-700";
+
+      case "MISSED":
+        return "bg-red-100 text-red-700";
+
+      default:
+        return "bg-yellow-100 text-yellow-700";
+    }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold text-gray-900">Your Scheduled Follow-Ups Pipeline</h2>
-        <span className="text-xs text-gray-500 font-medium">Total Actions: {followups.length}</span>
+
+        <h2 className="text-2xl font-bold">
+          Today's Followups
+        </h2>
+
+        <span className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-sm font-semibold">
+          {followups.length} Followups
+        </span>
+
       </div>
 
-      {followups.length === 0 ? (
-        <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed">
-          No pending or missed callbacks are current assigned to your stream.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {followups.map((item) => (
-            <div key={item.id} className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-4">
-              <div>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-gray-950 text-base">{item.lead.customer_name}</h4>
-                    <p className="text-xs text-gray-500 font-mono mt-0.5">📞 {item.lead.phone_number}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${getStatusStyle(item.status)}`}>
-                    {item.status}
-                  </span>
-                </div>
+      {followups.length === 0 && (
+        <div className="bg-white rounded-3xl border p-12 text-center">
 
-                <div className="mt-3 text-xs text-gray-600 bg-slate-50 p-2.5 rounded border border-slate-100">
-                  <span className="font-semibold block text-slate-400 uppercase tracking-tight text-[10px]">Context / Last Remarks:</span>
-                  <p className="mt-0.5 text-gray-700 italic">
-                    {item.remarks || "No prior descriptive logging detail available."}
-                  </p>
-                </div>
-              </div>
+          <Clock3
+            className="mx-auto text-slate-400"
+            size={42}
+          />
 
-              <div className="pt-2 border-t border-gray-100 flex justify-between items-center text-xs">
-                <div>
-                  <span className="text-gray-400 block text-[10px] uppercase">Target Date Time:</span>
-                  <span className="font-semibold text-gray-700">
-                    {new Date(item.followupDate).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
-                  </span>
-                </div>
+          <p className="mt-4 text-slate-500">
+            No Followups Assigned
+          </p>
 
-                {item.status === "PENDING" && (
-                  <button
-                    onClick={() => {
-                      const msg = prompt("Enter final call outcome text notes to save logs:");
-                      if (msg) onActionComplete(item.id, msg);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm transition-colors"
-                  >
-                    Execute Close
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
       )}
+
+      {followups.map((item) => (
+        <div
+          key={item.id}
+          className="bg-white border rounded-3xl p-6 shadow-sm space-y-5"
+        >
+          <div className="flex justify-between">
+
+            <div>
+
+              <h3 className="font-bold text-xl">
+                {item.lead.customer_name}
+              </h3>
+
+              <p className="text-slate-500">
+                {item.lead.phone_number}
+              </p>
+
+              <p className="text-sm text-slate-400 mt-1">
+                {item.lead.city}
+              </p>
+
+            </div>
+
+            <span
+              className={`px-4 py-2 rounded-xl text-sm font-semibold ${badge(
+                item.status
+              )}`}
+            >
+              {item.status}
+            </span>
+
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-4">
+
+            <div className="text-xs text-slate-500">
+              Last Remarks
+            </div>
+
+            <p className="mt-2">
+              {item.remarks || "No Remarks"}
+            </p>
+
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+
+            <a
+              href={`tel:${item.lead.phone_number}`}
+              className="bg-green-600 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+            >
+              <Phone size={16} />
+              Call
+            </a>
+
+            <a
+              href={`https://wa.me/91${item.lead.phone_number}`}
+              target="_blank"
+              className="bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+            >
+              <MessageCircle size={16} />
+              WhatsApp
+            </a>
+
+          </div>
+
+          {item.status === "PENDING" && (
+            <>
+              <textarea
+                placeholder="Enter Followup Remarks..."
+                value={remarks[item.id] || ""}
+                onChange={(e) =>
+                  setRemarks({
+                    ...remarks,
+                    [item.id]: e.target.value,
+                  })
+                }
+                className="w-full border rounded-2xl p-3"
+              />
+
+              <input
+                type="datetime-local"
+                value={date[item.id] || ""}
+                onChange={(e) =>
+                  setDate({
+                    ...date,
+                    [item.id]: e.target.value,
+                  })
+                }
+                className="border rounded-xl px-4 py-3"
+              />
+
+              <div className="flex flex-wrap gap-3">
+
+                <button
+                  onClick={() =>
+                    onComplete(
+                      item.id,
+                      remarks[item.id] || "",
+                      "FOLLOWUP"
+                    )
+                  }
+                  className="bg-blue-600 text-white px-5 py-3 rounded-xl flex items-center gap-2"
+                >
+                  <CheckCircle2 size={18} />
+                  Followup Done
+                </button>
+
+                <button
+                  onClick={() =>
+                    onComplete(
+                      item.id,
+                      remarks[item.id] || "",
+                      "SITE_VISIT"
+                    )
+                  }
+                  className="bg-orange-600 text-white px-5 py-3 rounded-xl flex items-center gap-2"
+                >
+                  <MapPin size={18} />
+                  Site Visit
+                </button>
+
+                <button
+                  onClick={() =>
+                    onComplete(
+                      item.id,
+                      remarks[item.id] || "",
+                      "CONFIRMED"
+                    )
+                  }
+                  className="bg-green-700 text-white px-5 py-3 rounded-xl flex items-center gap-2"
+                >
+                  <CheckCircle2 size={18} />
+                  Booking Done
+                </button>
+
+                <button
+                  onClick={() =>
+                    onComplete(
+                      item.id,
+                      remarks[item.id] || "",
+                      "REJECTED"
+                    )
+                  }
+                  className="bg-red-600 text-white px-5 py-3 rounded-xl flex items-center gap-2"
+                >
+                  <XCircle size={18} />
+                  Not Interested
+                </button>
+
+                <button
+                  onClick={() =>
+                    onReschedule(
+                      item.id,
+                      date[item.id]
+                    )
+                  }
+                  className="bg-indigo-600 text-white px-5 py-3 rounded-xl flex items-center gap-2"
+                >
+                  <Calendar size={18} />
+                  Reschedule
+                </button>
+
+              </div>
+            </>
+          )}
+        </div>
+      ))}
     </div>
   );
-};
+}

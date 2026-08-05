@@ -47,35 +47,40 @@ scheduledAt: "asc",
 });
 }
 
-async getTodayTasks() {
-const today = new Date();
-const start = new Date(
-  today.getFullYear(),
-  today.getMonth(),
-  today.getDate()
-);
+async getTodayTasks(employeeId?: string) {
+  const today = new Date();
 
-const end = new Date(
-  today.getFullYear(),
-  today.getMonth(),
-  today.getDate() + 1
-);
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
-return prisma.task.findMany({
-  where: {
-    scheduledAt: {
-      gte: start,
-      lt: end,
+  const end = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() + 1
+  );
+
+  return prisma.task.findMany({
+    where: {
+      ...(employeeId ? { employeeId } : {}),
+
+      scheduledAt: {
+        gte: start,
+        lt: end,
+      },
     },
-  },
-  include: {
-    lead: true,
-    employee: true,
-  },
-  orderBy: {
-    scheduledAt: "asc",
-  },
-});
+
+    include: {
+      lead: true,
+      employee: true,
+    },
+
+    orderBy: {
+      scheduledAt: "asc",
+    },
+  });
 }
 
 async getOverdueTasks() {

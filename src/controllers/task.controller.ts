@@ -43,9 +43,9 @@ export class TaskController {
   }
 
   // Today's Tasks
-  async getTodayTasks() {
-    return this.taskService.getTodayTasks();
-  }
+  async getTodayTasks(employeeId: string) {
+  return this.taskService.getTodayTasks(employeeId);
+ }
 
   // Overdue Tasks
   async getOverdueTasks() {

@@ -141,9 +141,9 @@ export class TaskService {
   }
 
   // Today's Tasks
-  async getTodayTasks() {
-    return this.taskRepository.getTodayTasks();
-  }
+  async getTodayTasks(employeeId: string) {
+  return this.taskRepository.getTodayTasks(employeeId);
+}
 
   // Overdue Tasks
   async getOverdueTasks() {
