@@ -13,22 +13,14 @@ export async function GET() {
           success: false,
           message: "GOOGLE_SHEET_ID missing in .env",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
     const GID = "521477022";
-
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-    console.log("CSV URL =", csvUrl);
-
-const response = await fetch(csvUrl);
-
-console.log("Response Status =", response.status);
-console.log("Response OK =", response.ok);
+    const response = await fetch(csvUrl, { cache: "no-store" });
 
     if (!response.ok) {
       return NextResponse.json(
@@ -37,17 +29,11 @@ console.log("Response OK =", response.ok);
           message: "Unable to fetch Google Sheet",
           status: response.status,
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
     const csv = await response.text();
-    console.log(csv.substring(0, 500));
-
-    console.log("CSV PREVIEW:");
-    console.log(csv.substring(0, 500));
 
     const parsed = Papa.parse(csv, {
       header: true,
@@ -56,16 +42,22 @@ console.log("Response OK =", response.ok);
 
     const rows = parsed.data as any[];
 
-    console.log("TOTAL ROWS =", rows.length);
-
-    if (rows.length > 0) {
-      console.log("FIRST ROW =", rows[0]);
-      console.log("HEADERS =", Object.keys(rows[0]));
+    if (rows.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "No rows to process",
+        insertedCount: 0,
+        skippedCount: 0,
+      });
     }
 
     let insertedCount = 0;
-    let updatedCount = 0;
+    let skippedCount = 0;
 
+    // Track phone numbers processed during the current batch run
+    const processedPhones = new Set<string>();
+
+    // Transporter for Mail Alerts
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -75,90 +67,88 @@ console.log("Response OK =", response.ok);
     });
 
     for (const row of rows) {
-      
-      const phone = row["phone_number"]?.toString().replace(/\D/g, "");
-      if (!phone || phone.length < 10) continue; // Skip if less than 10 digits
-      const phoneNumber = `+91${phone.slice(-10)}`;
+      const rawPhone = row["phone_number"] || row["phone"] || row["mobile"];
+      if (!rawPhone) continue;
 
-      const leadData = {
-        customer_name: row["full_name"] || "Unknown",
+      const cleanDigits = rawPhone.toString().replace(/\D/g, "").slice(-10);
+      if (cleanDigits.length < 10) continue; // Skip invalid numbers
 
-        phone_number: phoneNumber,
+      const phoneNumber = `+91${cleanDigits}`;
+      const email = row["email"] ? String(row["email"]).trim().toLowerCase() : null;
 
-        email: row["email"] || null,
+      // 1. IN-MEMORY SHEET DUP CHECK: Skip if already processed in this batch
+      if (processedPhones.has(phoneNumber)) {
+        skippedCount++;
+        continue;
+      }
+      processedPhones.add(phoneNumber);
 
-        city:
-          row[
-            "we_exclusively_serve_the_following_cities._please_select_your_city."
-          ] || null,
-
-        meta_lead_id: row["id"] || null,
-
-        ad_id: row["ad_id"] || null,
-
-        created_time: row["created_time"]
-          ? new Date(row["created_time"])
-          : null,
-
-        lead_status: row["lead_status"] || "CREATED",
-
-        location_detail: row["location"] || null,
-
-        timeline: row["schdule"] || null,
-
-        area: row["area"] || null,
-      };
-
-      // check existing lead
+      // 2. DATABASE CHECK: Strict Deduplication Check
       const existingLead = await prisma.lead.findFirst({
-        where: {
-          phone_number: phoneNumber,
-        },
+        where: { phone_number: phoneNumber },
       });
 
-      let lead;
-
       if (existingLead) {
-        // update existing lead
-        lead = await prisma.lead.update({
-          where: {
-            id: existingLead.id,
-          },
-          data: leadData,
-        });
+        skippedCount++;
+        continue;
+      }
 
-        updatedCount++;
-      } else {
-        // create new lead
-        lead = await prisma.lead.create({
+      // 3. SAFE CREATION IN DATABASE
+      try {
+        const leadData = {
+          customer_name: row["full_name"] || row["name"] || "Unknown",
+          phone_number: phoneNumber,
+          email: email,
+          city:
+            row[
+              "we_exclusively_serve_the_following_cities._please_select_your_city."
+            ] || row["city"] || null,
+          meta_lead_id: row["id"] || null,
+          ad_id: row["ad_id"] || null,
+          created_time: row["created_time"]
+            ? new Date(row["created_time"])
+            : new Date(),
+          lead_status: row["lead_status"] || "CREATED",
+          location_detail: row["location"] || null,
+          timeline: row["schdule"] || null,
+          area: row["area"] || null,
+        };
+
+        const newLead = await prisma.lead.create({
           data: leadData,
         });
 
         insertedCount++;
 
+        // 4. EMAIL ALERT (Only for newly created leads)
         try {
           await transporter.sendMail({
             from: process.env.GMAIL_USER,
             to: "saban.urbaneliving@gmail.com",
-            subject: `🔔 New Lead : ${lead.customer_name}`,
+            subject: `🔔 New Lead Received: ${newLead.customer_name}`,
             text: `
-Name : ${lead.customer_name}
-Phone : ${lead.phone_number}
-City : ${lead.city}
-Area : ${lead.area}
+Name  : ${newLead.customer_name}
+Phone : ${newLead.phone_number}
+Email : ${newLead.email || "N/A"}
+City  : ${newLead.city || "N/A"}
+Area  : ${newLead.area || "N/A"}
             `,
           });
         } catch (mailError) {
-          console.error("EMAIL ERROR:", mailError);
+          console.error("EMAIL SENDING FAILED:", mailError);
         }
+      } catch (createError) {
+        // Safe catch for duplicate constraints or DB errors during insertion
+        console.error(`Skipped lead creation for ${phoneNumber}:`, createError);
+        skippedCount++;
       }
     }
 
     return NextResponse.json({
       success: true,
-      totalRows: rows.length,
+      totalRowsProcessed: rows.length,
       insertedCount,
-      updatedCount,
+      skippedCount,
     });
   } catch (error: any) {
     console.error("SYNC ERROR:", error);
@@ -166,12 +156,9 @@ Area : ${lead.area}
     return NextResponse.json(
       {
         success: false,
-        error: error?.message,
-        fullError: String(error),
+        error: error?.message || "Internal Server Error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

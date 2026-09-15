@@ -2,15 +2,32 @@ import { prisma } from "@/lib/prisma";
 import { LeadStage } from "@prisma/client";
 
 export class LeadRepository {
+  // Common include configuration for consistent data loading across API queries
+  private defaultInclude = {
+    assignedTo: true,
+    callRecordings: {
+      include: {
+        employee: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc" as const,
+      },
+    },
+  };
+
   // =========================
   // BASIC METHODS
   // =========================
 
   async getAll() {
     return prisma.lead.findMany({
-      include: {
-        assignedTo: true,
-      },
+      include: this.defaultInclude,
       orderBy: {
         createdAt: "desc",
       },
@@ -21,8 +38,13 @@ export class LeadRepository {
     return prisma.lead.findUnique({
       where: { id },
       include: {
-        assignedTo: true,
+        ...this.defaultInclude,
         activities: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+        followups: {
           orderBy: {
             createdAt: "desc",
           },
@@ -36,6 +58,7 @@ export class LeadRepository {
       where: { id },
       data: {
         stage,
+        lead_status: stage,
       },
     });
   }
@@ -44,24 +67,23 @@ export class LeadRepository {
   // CRM CORE METHODS
   // =========================
 
-  async findMany(args: any) {
+  async findMany(args: any = {}) {
+    const { include, ...restArgs } = args;
+
     return prisma.lead.findMany({
-      ...args,
-      include: {
-        assignedTo: true,
-      },
+      ...restArgs,
+      include: include || this.defaultInclude,
     });
   }
 
-  async count(where: any) {
+  async count(where: any = {}) {
     return prisma.lead.count({ where });
   }
 
   // =========================
-  // CREATE METHODS (Fixed for Service Layer)
+  // CREATE METHODS
   // =========================
 
-  // Service layer mein .create() call ho raha hai, isliye ye alias zaroori hai
   async create(data: any) {
     return this.createLead(data);
   }
@@ -69,18 +91,28 @@ export class LeadRepository {
   async createLead(data: any) {
     return prisma.lead.create({
       data,
+      include: this.defaultInclude,
     });
   }
 
   // =========================
-  // FUTURE READY METHODS
+  // UPDATE & DELETE METHODS
   // =========================
+
+  async update(id: string, data: any) {
+    return this.updateLead(id, data);
+  }
 
   async updateLead(id: string, data: any) {
     return prisma.lead.update({
       where: { id },
       data,
+      include: this.defaultInclude,
     });
+  }
+
+  async delete(id: string) {
+    return this.deleteLead(id);
   }
 
   async deleteLead(id: string) {

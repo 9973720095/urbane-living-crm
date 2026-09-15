@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
-import { LeadController } from "@/controllers/lead.controller";
-
-const leadController = new LeadController();
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const leads = await leadController.getAllLeads();
+    const leads = await prisma.lead.findMany({
+      include: {
+        assignedTo: true,
+        callRecordings: {
+          include: {
+            employee: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     return NextResponse.json({
       success: true,

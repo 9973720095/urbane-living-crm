@@ -11,7 +11,7 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   name      String
-  email     String
+  email     String   @unique
   password  String
   role      Role     @default(EMPLOYEE)
   createdAt DateTime @default(now())
@@ -19,97 +19,88 @@ model User {
 }
 
 model Employee {
-  id String @id @default(cuid())
-
-  name String
-
-  email String @unique
-
-  password String
-
-  phone String?
-
-  whatsapp String
-
-  avatar String?
-
-  department Department @default(MANAGEMENT)
-
-  role EmployeeRole @default(EMPLOYEE)
-
-  designation String?
-
-  employeeCode String? @unique
-
-  joiningDate DateTime?
-
-  reportingToId String?
-
-  address String?
-
-  emergencyName String?
-
+  id             String       @id @default(cuid())
+  name           String
+  email          String       @unique
+  password       String
+  phone          String?
+  whatsapp       String?
+  avatar         String?
+  department     Department   @default(SALES)
+  role           EmployeeRole @default(EMPLOYEE)
+  designation    String?
+  employeeCode   String?      @unique
+  assignedAreas  String? // Comma-separated Areas/Pincodes e.g. "Ghaziabad, Delhi, 201014"
+  joiningDate    DateTime?
+  reportingToId  String?
+  address        String?
+  emergencyName  String?
   emergencyPhone String?
+  isActive       Boolean      @default(true)
+  lastLogin      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  isActive Boolean @default(true)
+  reportingTo Employee?  @relation("EmployeeManager", fields: [reportingToId], references: [id])
+  team        Employee[] @relation("EmployeeManager")
 
-  lastLogin DateTime?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
- reportingTo Employee? @relation("EmployeeManager", fields: [reportingToId], references: [id])
-
-team Employee[] @relation("EmployeeManager")
-
-  leads Lead[]
-
-  followups FollowUp[]
-
-  meetings Meeting[]
-
-  orders Order[]
-
-  tasks Task[]
-
-  notifications Notification[]
-
-  uploadedMedia LeadMedia[]
-
+  leads          Lead[]
+  followups      FollowUp[]
+  meetings       Meeting[]
+  orders         Order[]
+  tasks          Task[]
+  notifications  Notification[]
+  uploadedMedia  LeadMedia[]
   callRecordings CallRecording[]
+
+  @@index([department])
+  @@index([role])
 }
 
 model Lead {
-  id              String          @id @default(cuid())
+  id              String    @id @default(cuid())
   customer_name   String
-  phone_number    String
+  phone_number    String    @unique // Hard block against duplicate leads
   email           String?
   city            String?
+  area            String?
+  pincode         String?
+  location_detail String?
   meta_lead_id    String?
   ad_id           String?
   created_time    DateTime?
-  location_detail String?
   timeline        String?
-  area            String?
-  lead_status     String          @default("CREATED")
-  assignedToId    String?
-  nextFollowUp    DateTime?
-  siteVisitDate   DateTime?
-  remarks         String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  priority        String?
+  lead_status     String    @default("CREATED")
+  stage           LeadStage @default(NEW)
+  priority        String?   @default("NORMAL")
   tags            String?
-  stage           LeadStage       @default(NEW)
-  activities      Activity[]
-  callRecordings  CallRecording[]
-  followups       FollowUp[]
-  assignedTo      Employee?       @relation(fields: [assignedToId], references: [id])
-  media           LeadMedia[]
-  meetings        Meeting[]
-  orders          Order[]
-  tasks           Task[]
+  remarks         String?
+
+  // Interior Design Specifics
+  bhkType         String? // e.g. 2BHK, 3BHK, Villa
+  carpetArea      String? // Sq ft
+  estimatedBudget String?
+
+  assignedToId String?
+  nextFollowUp DateTime?
+  siteVisitDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedTo     Employee?       @relation(fields: [assignedToId], references: [id])
+  activities     Activity[]
+  callRecordings CallRecording[]
+  followups      FollowUp[]
+  media          LeadMedia[]
+  meetings       Meeting[]
+  orders         Order[]
+  tasks          Task[]
+
+  @@index([phone_number])
+  @@index([area])
+  @@index([pincode])
+  @@index([stage])
 }
 
 model Activity {
@@ -213,17 +204,22 @@ model CallRecording {
   employeeId   String?
   phoneNumber  String
   direction    CallDirection
-  duration     Int           @default(0)
-  recordingUrl String
+  duration     Int           @default(0) // Duration in seconds
+  recordingUrl String?       // Nullable if call was missed/unrecorded
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   employee     Employee?     @relation(fields: [employeeId], references: [id])
   lead         Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([phoneNumber])
+  @@index([employeeId])
 }
 
 enum CallDirection {
   INCOMING
   OUTGOING
+  MISSED
+  REJECTED
 }
 
 enum Role {
@@ -238,6 +234,9 @@ enum LeadStage {
   FOLLOWUP
   MEETING_FIXED
   SITE_VISIT
+  ESTIMATE_SENT
+  DESIGN_PHASE
+  QUOTATION_APPROVED
   CONFIRMED
   REJECTED
 }
@@ -301,28 +300,16 @@ enum Department {
 
 enum EmployeeRole {
   SUPER_ADMIN
-
   ADMIN
-
   MANAGER
-
   SALES_MANAGER
-
   SALES_EXECUTIVE
-
   DESIGN_MANAGER
-
   DESIGNER
-
   HR_MANAGER
-
   HR_EXECUTIVE
-
   ACCOUNT_MANAGER
-
   ACCOUNT_EXECUTIVE
-
   SUPPORT
-
   EMPLOYEE
 }

@@ -5,7 +5,7 @@ export class LeadController {
   private leadService = new LeadService();
 
   // =========================
-  // EXISTING METHODS
+  // READ METHODS
   // =========================
 
   async getAllLeads() {
@@ -16,23 +16,35 @@ export class LeadController {
     return this.leadService.getLeadById(id);
   }
 
-  async updateLeadStage(id: string, stage: LeadStage) {
-    return this.leadService.updateLeadStage(id, stage);
+  async getFilteredLeads(filters: any) {
+    return this.leadService.getFilteredLeads(filters);
   }
 
   // =========================
-  // NEW: CREATE LEAD METHOD
+  // WRITE & UPDATE METHODS
   // =========================
 
   async createLead(data: any) {
     return await this.leadService.createLead(data);
   }
 
+  async updateLead(id: string, data: any) {
+    return await this.leadService.updateLead(id, data);
+  }
+
+  async updateLeadStage(id: string, stage: LeadStage) {
+    return await this.leadService.updateLeadStage(id, stage);
+  }
+
   // =========================
-  // EXISTING: FILTERED LEADS
+  // DELETE & ASSIGNMENT METHODS
   // =========================
 
-  async getFilteredLeads(filters: any) {
-    return this.leadService.getFilteredLeads(filters);
+  async deleteLead(id: string) {
+    return await this.leadService.deleteLead(id);
+  }
+
+  async assignLead(id: string, employeeId: string) {
+    return await this.leadService.assignLead(id, employeeId);
   }
 }
