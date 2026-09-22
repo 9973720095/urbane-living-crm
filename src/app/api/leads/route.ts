@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// CORS Headers Configuration
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+// Preflight Requests Options Handler
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET() {
   try {
     const leads = await prisma.lead.findMany({
@@ -25,10 +37,13 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: leads,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: leads,
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error("GET LEADS ERROR:", error);
 
@@ -40,6 +55,7 @@ export async function GET() {
       },
       {
         status: 500,
+        headers: corsHeaders,
       }
     );
   }
