@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "next dev",
@@ -22,7 +22,7 @@
     "date-fns": "^4.1.0",
     "googleapis": "^173.0.0",
     "lucide-react": "^0.454.0",
-    "next": "14.2.18",
+    "next": "14.2.23",
     "nodemailer": "^6.10.1",
     "papaparse": "^5.5.3",
     "react": "^18.3.1",
@@ -41,18 +41,12 @@
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.18",
+    "eslint-config-next": "14.2.23",
     "postcss": "^8.4.38",
     "prisma": "^6.2.1",
     "tailwindcss": "^3.4.3",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "webpack": "^5.97.0"
-  },
-  "overrides": {
-    "next": {
-      "webpack": "^5.97.0"
-    }
+    "typescript": "^5.4.5"
   }
 }
