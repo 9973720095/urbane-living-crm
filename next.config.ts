@@ -12,12 +12,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "2mb",
-    },
-  },
-
   images: {
     remotePatterns: [
       {
@@ -25,11 +19,6 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
       },
     ],
-  },
-
-  // Webpack module resolution fix for Vercel
-  webpack: (config) => {
-    return config;
   },
 
   // Global API CORS Headers (Mobile App + Web access ke liye)
