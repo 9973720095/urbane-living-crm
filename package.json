@@ -44,6 +44,12 @@
     "tailwindcss": "^3.4.3",
     "tailwindcss-animate": "^1.0.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "webpack": "^5.97.0"
+  },
+  "overrides": {
+    "next": {
+      "webpack": "^5.97.0"
+    }
   }
 }
