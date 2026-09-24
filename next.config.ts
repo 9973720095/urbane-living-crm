@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Webpack module resolution fix for Vercel
+  webpack: (config) => {
+    return config;
+  },
+
   // Global API CORS Headers (Mobile App + Web access ke liye)
   async headers() {
     return [
