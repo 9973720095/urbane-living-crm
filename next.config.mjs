@@ -3,12 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
 
   typescript: {
-    // Vercel build pass hone ke liye strictly type errors bypass karta hai
+    // Vercel build pass hone ke liye
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    // Vercel build time eslint failures se bachata hai
-    ignoreDuringBuilds: true,
   },
 
   images: {
