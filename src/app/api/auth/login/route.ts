@@ -8,12 +8,20 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
+    if (!email || !password) {
+      return NextResponse.json({ success: false, message: "Email and password required" }, { status: 400 });
+    }
+
     const employee = await prisma.employee.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (!employee) {
       return NextResponse.json({ success: false, message: "Employee not found" }, { status: 404 });
+    }
+
+    if (!employee.isActive) {
+      return NextResponse.json({ success: false, message: "Account deactivated" }, { status: 403 });
     }
 
     // hash + plain dono support
@@ -28,13 +36,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid Password" }, { status: 401 });
     }
 
-    if (!employee.isActive) {
-      return NextResponse.json({ success: false, message: "Account deactivated" }, { status: 403 });
-    }
-
-    await prisma.employee.update({
+    // lastLogin update - non-blocking, deadlock se login fail nahi hoga
+    prisma.employee.update({
       where: { id: employee.id },
       data: { lastLogin: new Date() },
+    }).catch((e) => {
+      console.warn("lastLogin update skipped:", e.message);
     });
 
     return NextResponse.json({
@@ -49,6 +56,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("LOGIN 500:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: error.message || "Server error" }, { status: 500 });
   }
 }
