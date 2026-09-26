@@ -4,12 +4,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   name      String
   email     String   @unique
   password  String
@@ -19,7 +19,7 @@ model User {
 }
 
 model Employee {
-  id             String       @id @default(cuid())
+  id             String       @id @default(cuid()) @map("_id")
   name           String
   email          String       @unique
   password       String
@@ -30,7 +30,7 @@ model Employee {
   role           EmployeeRole @default(EMPLOYEE)
   designation    String?
   employeeCode   String?      @unique
-  assignedAreas  String? // Comma-separated Areas/Pincodes e.g. "Ghaziabad, Delhi, 201014"
+  assignedAreas  String?
   joiningDate    DateTime?
   reportingToId  String?
   address        String?
@@ -41,7 +41,7 @@ model Employee {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  reportingTo Employee?  @relation("EmployeeManager", fields: [reportingToId], references: [id])
+  reportingTo Employee?  @relation("EmployeeManager", fields: [reportingToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   team        Employee[] @relation("EmployeeManager")
 
   leads          Lead[]
@@ -52,15 +52,12 @@ model Employee {
   notifications  Notification[]
   uploadedMedia  LeadMedia[]
   callRecordings CallRecording[]
-
-  @@index([department])
-  @@index([role])
 }
 
 model Lead {
-  id              String    @id @default(cuid())
+  id              String    @id @default(cuid()) @map("_id")
   customer_name   String
-  phone_number    String    @unique // Hard block against duplicate leads
+  phone_number    String    @unique
   email           String?
   city            String?
   area            String?
@@ -75,20 +72,16 @@ model Lead {
   priority        String?   @default("NORMAL")
   tags            String?
   remarks         String?
-
-  // Interior Design Specifics
-  bhkType         String? // e.g. 2BHK, 3BHK, Villa
-  carpetArea      String? // Sq ft
+  bhkType         String?
+  carpetArea      String?
   estimatedBudget String?
+  assignedToId    String?
+  nextFollowUp    DateTime?
+  siteVisitDate   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  assignedToId String?
-  nextFollowUp DateTime?
-  siteVisitDate DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  assignedTo     Employee?       @relation(fields: [assignedToId], references: [id])
+  assignedTo     Employee?       @relation(fields: [assignedToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   activities     Activity[]
   callRecordings CallRecording[]
   followups      FollowUp[]
@@ -96,15 +89,10 @@ model Lead {
   meetings       Meeting[]
   orders         Order[]
   tasks          Task[]
-
-  @@index([phone_number])
-  @@index([area])
-  @@index([pincode])
-  @@index([stage])
 }
 
 model Activity {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   leadId      String
   type        String
   oldStatus   String?
@@ -116,7 +104,7 @@ model Activity {
 }
 
 model FollowUp {
-  id           String         @id @default(cuid())
+  id           String         @id @default(cuid()) @map("_id")
   followupDate DateTime
   remarks      String?
   status       FollowUpStatus @default(PENDING)
@@ -124,12 +112,12 @@ model FollowUp {
   leadId       String
   employeeId   String
   createdAt    DateTime       @default(now())
-  employee     Employee       @relation(fields: [employeeId], references: [id])
+  employee     Employee       @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lead         Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model Meeting {
-  id            String        @id @default(cuid())
+  id            String        @id @default(cuid()) @map("_id")
   meetingDate   DateTime
   notes         String?
   status        MeetingStatus @default(SCHEDULED)
@@ -138,35 +126,35 @@ model Meeting {
   leadId        String
   employeeId    String
   createdAt     DateTime      @default(now())
-  employee      Employee      @relation(fields: [employeeId], references: [id])
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model Order {
-  id         String      @id @default(cuid())
+  id         String      @id @default(cuid()) @map("_id")
   amount     Float?
   status     OrderStatus @default(PENDING)
   remarks    String?
   leadId     String
   employeeId String
   createdAt  DateTime    @default(now())
-  employee   Employee    @relation(fields: [employeeId], references: [id])
+  employee   Employee    @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lead       Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
-  id         String           @id @default(cuid())
+  id         String           @id @default(cuid()) @map("_id")
   title      String
   message    String
   isRead     Boolean          @default(false)
   type       NotificationType @default(INFO)
   employeeId String?
   createdAt  DateTime         @default(now())
-  employee   Employee?        @relation(fields: [employeeId], references: [id])
+  employee   Employee?        @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Task {
-  id            String     @id @default(cuid())
+  id            String     @id @default(cuid()) @map("_id")
   title         String
   description   String?
   type          TaskType
@@ -179,12 +167,12 @@ model Task {
   completedAt   DateTime?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
-  employee      Employee   @relation(fields: [employeeId], references: [id])
+  employee      Employee   @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lead          Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model LeadMedia {
-  id           String        @id @default(cuid())
+  id           String        @id @default(cuid()) @map("_id")
   leadId       String
   uploadedById String?
   type         LeadMediaType
@@ -195,24 +183,21 @@ model LeadMedia {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   lead         Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  uploadedBy   Employee?     @relation(fields: [uploadedById], references: [id])
+  uploadedBy   Employee?     @relation(fields: [uploadedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model CallRecording {
-  id           String        @id @default(cuid())
+  id           String        @id @default(cuid()) @map("_id")
   leadId       String
   employeeId   String?
   phoneNumber  String
   direction    CallDirection
-  duration     Int           @default(0) // Duration in seconds
-  recordingUrl String?       // Nullable if call was missed/unrecorded
+  duration     Int           @default(0)
+  recordingUrl String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  employee     Employee?     @relation(fields: [employeeId], references: [id])
+  employee     Employee?     @relation(fields: [employeeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lead         Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
-
-  @@index([phoneNumber])
-  @@index([employeeId])
 }
 
 enum CallDirection {
