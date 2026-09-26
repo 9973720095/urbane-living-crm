@@ -1,11 +1,11 @@
 import { PrismaClient, Department, EmployeeRole } from "@prisma/client";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs"; // bcrypt ki jagah bcryptjs - Vercel pe stable
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Seeding Employees...");
-  await prisma.employee.deleteMany();
+  await prisma.employee.deleteMany({});
 
   const employees = [
     { name: "Abhishek Mishra", email: "abhi.urbaneliving@gmail.com", pass: "ULFC@abhi@2026", whatsapp: "9667999139", phone: "9667999139", designation: "Manager", department: Department.MANAGEMENT, role: EmployeeRole.MANAGER, employeeCode: "EMP001" },
@@ -26,6 +26,7 @@ async function main() {
         whatsapp: e.whatsapp, phone: e.phone,
         designation: e.designation, department: e.department,
         role: e.role, employeeCode: e.employeeCode,
+        isActive: true,
       }
     });
   }
